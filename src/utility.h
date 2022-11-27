@@ -8,10 +8,11 @@
 #define LCD_HEIGHT 135
 
 #define BRIGHTNESS_MAX 4
+const int BRIGHTNESS_LEVELS[4] = {7, 8, 9, 10};
 
 #define LCD_ROTATION 3
 
-String DAYS[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+const String DAYS[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
 struct textCenter
 {

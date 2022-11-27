@@ -21,7 +21,7 @@ void initWiFi()
 
   M5.Lcd.setTextSize(1);
   M5.Lcd.setTextColor(TFT_ORANGE);
- 
+
   drawCenteredText("Searching Wifi networks...", 50);
 
   int n = WiFi.scanNetworks();
@@ -82,7 +82,7 @@ void initWiFi()
     M5.Lcd.setTextColor(TFT_GREEN);
 
     drawCenteredText("Connected!", 90);
-    
+
     M5.Lcd.setTextSize(1);
     drawCenteredText(mobileApFound > -1 ? "Mobile hotspot" : "WLAN", 110);
 

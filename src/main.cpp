@@ -17,8 +17,6 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
 Preferences preferences;
 
-int bright[4] = {8, 9, 10, 12};
-
 void setup()
 {
   M5.begin();
@@ -33,7 +31,7 @@ void setup()
   String currentDate = String(RTC_DateStruct.Year) + "." + String(RTC_DateStruct.Month) + "." + String(RTC_DateStruct.Date);
 
   // if dates are different connect to wlan and sync time with NTP server
-  if (clockUpdateDate.equals("") || !clockUpdateDate.equals(currentDate)) { 
+  if (clockUpdateDate.equals("") || !clockUpdateDate.equals(currentDate)) {
     // search for wifi networks and connects to selected wlan neetwork or mobile hotspot (if available)
     initWiFi();
 
@@ -78,7 +76,7 @@ void setup()
   LCD_Clear(1);
 
   M5.Axp.EnableCoulombcounter();
-  M5.Axp.ScreenBreath(bright[0]);
+  M5.Axp.ScreenBreath(BRIGHTNESS_LEVELS[0]);
 }
 
 int H = 0;
@@ -100,7 +98,7 @@ void loop()
       brtLvl = 0;
     }
 
-    M5.Axp.ScreenBreath(bright[brtLvl]);
+    M5.Axp.ScreenBreath(BRIGHTNESS_LEVELS[brtLvl]);
 
     // clear brightness level area
     M5.Lcd.fillRect(LCD_WIDTH - 14, 0, 8, 30, TFT_BLACK);
