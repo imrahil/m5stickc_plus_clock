@@ -1,16 +1,16 @@
 #include <Arduino.h>
 #include <M5StickCPlus.h>
-#include "AXP192.h"
-#include "7seg20.h"
+#include <AXP192.h>
 
-#define grey 0x65DB
-#define BUTTON_A 37
-#define BUTTON_B 39
+#include "dseg_font.h"
+#include "app_secrets.h"
 
 #define LCD_WIDTH 240
 #define LCD_HEIGHT 135
 
 #define LCD_ROTATION 3
+
+#define BRIGHTNESS_MAX 4
 
 RTC_TimeTypeDef RTC_TimeStruct;
 RTC_DateTypeDef RTC_DateStruct;
@@ -19,11 +19,9 @@ int bright[4] = {8, 9, 10, 12};
 
 void setup()
 {
-  pinMode(BUTTON_A, INPUT_PULLUP);
-  pinMode(BUTTON_B, INPUT_PULLUP);
-
   M5.begin();
-  M5.Lcd.setRotation(3);
+
+  M5.Lcd.setRotation(LCD_ROTATION);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setSwapBytes(true);
   M5.Lcd.setTextSize(1);
@@ -36,7 +34,7 @@ void setup()
   RTC_TimeTypeDef TimeStruct;
   TimeStruct.Hours = 0;
   TimeStruct.Minutes = 0;
-  TimeStruct.Seconds = 00;
+  TimeStruct.Seconds = 0;
 
   RTC_DateTypeDef DateStruct;
   DateStruct.WeekDay = 1;
@@ -48,102 +46,94 @@ void setup()
 int H = 0;
 int M = 0;
 
-String ho = "";
-String mi = "";
-String se = "";
-
 String days[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
 
-int c = 0;
-int pres = 0;
+int brtLvl = 0;
 bool inv = 0;
+
+String formatValue(String value)
+{
+  if (value.length() < 2)
+  {
+    value = "0" + value;
+  }
+
+  return value;
+}
 
 void loop()
 {
-  // M5.update();
+  M5.update();
 
-  if (digitalRead(BUTTON_A) == 0)
+  if (M5.BtnA.wasReleased())
   {
-    if (pres == 0)
+    brtLvl++;
+
+    if (brtLvl == BRIGHTNESS_MAX)
     {
-      pres = 1;
-      c++;
-
-      if (c > 3)
-      {
-        c = 0;
-      }
-
-      M5.Axp.ScreenBreath(bright[c]);
-      M5.Lcd.fillRect(146, 55, 8, 30, TFT_BLACK);
+      brtLvl = 0;
     }
-  }
-  else
-  {
-    pres = 0;
+
+    M5.Axp.ScreenBreath(bright[brtLvl]);
+
+    // clear brightness level area
+    M5.Lcd.fillRect(LCD_WIDTH - 14, 0, 8, 30, TFT_BLACK);
   }
 
   M5.Rtc.GetTime(&RTC_TimeStruct);
   M5.Rtc.GetData(&RTC_DateStruct);
 
-  M5.Lcd.setCursor(0, 15);
-  M5.Lcd.setTextFont(0);
+  // day of the week
+  String weekDay = days[RTC_DateStruct.WeekDay - 1];
+  M5.Lcd.drawString(weekDay, 4, 2, 2);
 
-  M5.Lcd.drawString(String(M5.Axp.GetBatVoltage()) + " V  ", 114, 3);
-  M5.Lcd.setFreeFont(&DSEG7_Classic_Bold_30);
+  // battery voltage
+  String batt = String(M5.Axp.GetBatVoltage()) + " V";
+  M5.Lcd.drawString(batt, LCD_WIDTH - (batt.length() * 8) - 16, 10, 2);
 
+  // color change to grey
+  M5.Lcd.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+
+  // day and month
+  String dayMonth = String(RTC_DateStruct.Date) + "/" + String(RTC_DateStruct.Month);
+  M5.Lcd.drawString(dayMonth, 4, 20, 4);
+
+  // year
+  String year = String(RTC_DateStruct.Year);
+  M5.Lcd.drawString(year, 70, 28, 2);
+
+  M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+
+  // segment font
+  M5.Lcd.setFreeFont(&DSEG7_Classic_Regular);
+
+  // updates only if value changed (e.g.: every minute or hour)
   if (H != int(RTC_TimeStruct.Hours) || M != int(RTC_TimeStruct.Minutes))
   {
-    ho = String(RTC_TimeStruct.Hours);
-    mi = String(RTC_TimeStruct.Minutes);
+    String ho = formatValue(String(RTC_TimeStruct.Hours));
+    String mi = formatValue(String(RTC_TimeStruct.Minutes));
 
-    if (ho.length() < 2)
-    {
-      ho = "0" + ho;
-    }
-
-    if (mi.length() < 2)
-    {
-      mi = "0" + mi;
-    }
-
-    M5.Lcd.drawString(ho + ":" + mi, 2, 46);
+    M5.Lcd.drawString(ho + ":" + mi, 2, LCD_HEIGHT - 70);
 
     H = int(RTC_TimeStruct.Hours);
     M = int(RTC_TimeStruct.Minutes);
   }
 
-  se = String(RTC_TimeStruct.Seconds);
+  String se = formatValue(String(RTC_TimeStruct.Seconds));
+  M5.Lcd.drawString(se, LCD_WIDTH - 30, LCD_HEIGHT - 30, 4);
 
-  if (se.length() < 2)
+  // brightness level bars
+  for (int i = 0; i < brtLvl + 1; i++)
   {
-    se = "0" + se;
+    M5.Lcd.fillRect(LCD_WIDTH - 14, 20 - (i * 5), 8, 3, TFT_LIGHTGREY);
   }
 
-  M5.Lcd.drawString(se, 112, 57, 4);
-
-  M5.Lcd.drawString(days[RTC_DateStruct.WeekDay - 1] + "    ", 4, 0, 2);
-  M5.Lcd.setTextColor(grey, TFT_BLACK);
-
-  M5.Lcd.drawString(String(RTC_DateStruct.Date) + "/" + String(RTC_DateStruct.Month), 4, 20, 4);
-  M5.Lcd.drawString(String(RTC_DateStruct.Year), 70, 28, 2);
-
-  M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
-
-  for (int i = 0; i < c + 1; i++)
+  // invert display when button B (side one) was released
+  if (M5.BtnB.wasReleased())
   {
-    M5.Lcd.fillRect(146, 73 - (i * 5), 8, 3, grey);
-  }
-
-  if (digitalRead(BUTTON_B) == LOW)
-  {
-    while (digitalRead(BUTTON_B) == LOW)
-    {
-    }
-
     M5.Lcd.invertDisplay(inv);
     inv = !inv;
   }
 
-  delay(12);
+  delay(50);
 }
