@@ -1,16 +1,11 @@
 #include <Arduino.h>
 #include <M5StickCPlus.h>
 #include <AXP192.h>
+#include <WiFi.h>
 
+#include "utility.h"
+#include "wifi_helpers.h"
 #include "dseg_font.h"
-#include "app_secrets.h"
-
-#define LCD_WIDTH 240
-#define LCD_HEIGHT 135
-
-#define LCD_ROTATION 3
-
-#define BRIGHTNESS_MAX 4
 
 RTC_TimeTypeDef RTC_TimeStruct;
 RTC_DateTypeDef RTC_DateStruct;
@@ -21,13 +16,11 @@ void setup()
 {
   M5.begin();
 
-  M5.Lcd.setRotation(LCD_ROTATION);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setSwapBytes(true);
-  M5.Lcd.setTextSize(1);
+  // search for wifi networks and connects to selected wlan neetwork or mobile hotspot (if available)
+  initWiFi();
 
-  M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
 
+/*
   M5.Axp.EnableCoulombcounter();
   M5.Axp.ScreenBreath(bright[0]);
 
@@ -41,29 +34,19 @@ void setup()
   DateStruct.Month = 1;
   DateStruct.Date = 1;
   DateStruct.Year = 2022;
+*/
 }
 
 int H = 0;
 int M = 0;
 
-String days[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
-
 int brtLvl = 0;
 bool inv = 0;
-
-String formatValue(String value)
-{
-  if (value.length() < 2)
-  {
-    value = "0" + value;
-  }
-
-  return value;
-}
 
 void loop()
 {
   M5.update();
+/*
 
   if (M5.BtnA.wasReleased())
   {
@@ -84,12 +67,12 @@ void loop()
   M5.Rtc.GetData(&RTC_DateStruct);
 
   // day of the week
-  String weekDay = days[RTC_DateStruct.WeekDay - 1];
+  String weekDay = DAYS[RTC_DateStruct.WeekDay - 1];
   M5.Lcd.drawString(weekDay, 4, 2, 2);
 
   // battery voltage
   String batt = String(M5.Axp.GetBatVoltage()) + " V";
-  M5.Lcd.drawString(batt, LCD_WIDTH - (batt.length() * 8) - 16, 10, 2);
+  M5.Lcd.drawString(batt, LCD_WIDTH - (batt.length() * 8) - 16, 10, 2); // TODO: use Lcd.textWidth
 
   // color change to grey
   M5.Lcd.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
@@ -136,4 +119,5 @@ void loop()
   }
 
   delay(50);
+*/
 }
