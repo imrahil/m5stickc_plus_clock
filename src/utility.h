@@ -11,7 +11,7 @@
 
 #define LCD_ROTATION 3
 
-String DAYS[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+String DAYS[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
 struct textCenter
 {
@@ -68,6 +68,16 @@ void drawCenteredText(String text)
   textCenter center = centerText(text);
 
   drawCenteredText(text, center.horizontal, center.vertical);
+}
+
+// source - https://stackoverflow.com/questions/40517192/c-day-of-week-for-given-date
+int calcDayNumFromDate(int y, int m, int d)
+{
+  m = (m + 9) % 12;
+  y -= m / 10;
+  int dn = 365 * y + y / 4 - y / 100 + y / 400 + (m * 306 + 5) / 10 + (d - 1);
+
+  return dn;
 }
 
 #endif

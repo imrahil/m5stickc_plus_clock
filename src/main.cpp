@@ -2,6 +2,7 @@
 #include <M5StickCPlus.h>
 #include <AXP192.h>
 #include <WiFi.h>
+#include <NTPClient.h>   //https://github.com/taranais/NTPClient
 
 #include "utility.h"
 #include "wifi_helpers.h"
@@ -9,6 +10,10 @@
 
 RTC_TimeTypeDef RTC_TimeStruct;
 RTC_DateTypeDef RTC_DateStruct;
+
+// Define NTP Client to get time
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP);
 
 int bright[4] = {8, 9, 10, 12};
 
@@ -19,22 +24,41 @@ void setup()
   // search for wifi networks and connects to selected wlan neetwork or mobile hotspot (if available)
   initWiFi();
 
+  if (WiFi.status() == WL_CONNECTED) {
+    timeClient.begin();
+    // Set offset time in seconds to adjust for your timezone, for example:
+    // GMT +1 = 3600
+    // GMT +8 = 28800
+    // GMT -1 = -3600
+    // GMT 0 = 0
+    timeClient.setTimeOffset(3600);
 
-/*
-  M5.Axp.EnableCoulombcounter();
-  M5.Axp.ScreenBreath(bright[0]);
+    timeClient.update();
 
-  RTC_TimeTypeDef TimeStruct;
-  TimeStruct.Hours = 0;
-  TimeStruct.Minutes = 0;
-  TimeStruct.Seconds = 0;
+    LCD_Clear(1);
 
-  RTC_DateTypeDef DateStruct;
-  DateStruct.WeekDay = 1;
-  DateStruct.Month = 1;
-  DateStruct.Date = 1;
-  DateStruct.Year = 2022;
-*/
+    M5.Axp.EnableCoulombcounter();
+    M5.Axp.ScreenBreath(bright[0]);
+
+    RTC_TimeTypeDef TimeStruct;
+    TimeStruct.Hours = timeClient.getHours();
+    TimeStruct.Minutes = timeClient.getMinutes();
+    TimeStruct.Seconds = timeClient.getSeconds();
+
+    String formattedDate = timeClient.getFormattedDate();
+    int year = formattedDate.substring(0, 4).toInt();
+    int month = formattedDate.substring(5, 7).toInt();
+    int day = formattedDate.substring(8, 10).toInt();
+
+    RTC_DateTypeDef DateStruct;
+    DateStruct.WeekDay = calcDayNumFromDate(year, month, day);
+    DateStruct.Date = day;
+    DateStruct.Month = month;
+    DateStruct.Year = year;
+
+    M5.Rtc.SetTime(&TimeStruct);
+    M5.Rtc.SetData(&DateStruct);
+  }
 }
 
 int H = 0;
@@ -46,7 +70,6 @@ bool inv = 0;
 void loop()
 {
   M5.update();
-/*
 
   if (M5.BtnA.wasReleased())
   {
@@ -77,13 +100,9 @@ void loop()
   // color change to grey
   M5.Lcd.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
 
-  // day and month
-  String dayMonth = String(RTC_DateStruct.Date) + "/" + String(RTC_DateStruct.Month);
+  // day, month and year
+  String dayMonth = String(RTC_DateStruct.Date) + "/" + String(RTC_DateStruct.Month) + "/" + String(RTC_DateStruct.Year);
   M5.Lcd.drawString(dayMonth, 4, 20, 4);
-
-  // year
-  String year = String(RTC_DateStruct.Year);
-  M5.Lcd.drawString(year, 70, 28, 2);
 
   M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
 
@@ -119,5 +138,4 @@ void loop()
   }
 
   delay(50);
-*/
 }

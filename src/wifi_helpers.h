@@ -29,7 +29,7 @@ void initWiFi()
 
   if (n == 0)
   {
-    LCD_Clear(2);
+    LCD_Clear();
     drawCenteredText("No networks found...");
 
     return;
